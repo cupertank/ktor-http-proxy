@@ -10,7 +10,7 @@ plugins {
 group = "me.cupertank"
 version = "0.0.1"
 application {
-    mainClass.set("com.example.ApplicationKt")
+    mainClass.set("me.cupertank.ApplicationKt")
 }
 
 repositories {

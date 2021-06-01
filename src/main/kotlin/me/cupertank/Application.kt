@@ -48,7 +48,6 @@ fun main(args: Array<String>) {
 
     runBlocking {
         val selector = ActorSelectorManager(Dispatchers.Default)
-
         val builder = aSocket(selector).tcp()
 
         val server = builder.bind("0.0.0.0", 8080) {
