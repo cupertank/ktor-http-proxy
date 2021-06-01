@@ -51,7 +51,10 @@ fun main(args: Array<String>) {
 
         val builder = aSocket(selector).tcp()
 
-        val server = builder.bind("0.0.0.0", 8080)
+        val server = builder.bind("0.0.0.0", 8080) {
+            reuseAddress = true
+            reusePort = true
+        }
         while (true) {
             val clientSocket = server.accept()
 
