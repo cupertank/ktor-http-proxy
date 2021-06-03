@@ -4,6 +4,9 @@ import io.ktor.network.selector.*
 import io.ktor.network.sockets.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
+import kotlinx.cli.ArgParser
+import kotlinx.cli.ArgType
+import kotlinx.cli.default
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -45,12 +48,17 @@ data class HttpRequest(
 
 
 fun main(args: Array<String>) {
+    val argParser = ArgParser("ktor-http-server")
+    val port by argParser.option(ArgType.Int, "port", "p", "Proxy server port").default(8080)
+    val hostName by argParser.option(ArgType.String, "hostname", "host", "Proxy server hostname").default("0.0.0.0")
+    argParser.parse(args)
+
 
     runBlocking {
         val selector = ActorSelectorManager(Dispatchers.Default)
         val builder = aSocket(selector).tcp()
 
-        val server = builder.bind("0.0.0.0", 8080) {
+        val server = builder.bind(hostName, port) {
             reuseAddress = true
             reusePort = true
         }
@@ -70,7 +78,6 @@ fun main(args: Array<String>) {
 
                     val httpRequest = HttpRequest.fromBytes(buffer)
                     if (buffer.isEmpty() || httpRequest == HttpRequest.EMPTY) {
-                        clientSocket.close()
                         return@launch
                     }
 
@@ -81,7 +88,6 @@ fun main(args: Array<String>) {
                             builder.connect(httpRequest.host, httpRequest.port)
                         } catch (e: Exception) {
                             println("Failed CONNECT")
-                            clientSocket.close()
                             return@launch
                         }
 
@@ -113,8 +119,6 @@ fun main(args: Array<String>) {
                             }
                             clientWriter.flush()
                         }
-                        serverSocket.close()
-                        clientSocket.close()
                     } else {
                         val serverSocket = builder.connect(httpRequest.host, httpRequest.port)
                         val serverWriter = serverSocket.openWriteChannel(autoFlush = true)
@@ -129,8 +133,6 @@ fun main(args: Array<String>) {
                         clientWriter.writeAvailable(buffer, 0, size)
                         clientWriter.flush()
 
-                        clientSocket.close()
-                        serverSocket.close()
                     }
                 } catch (e: Exception) {
                 }
